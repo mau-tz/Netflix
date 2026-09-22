@@ -31,27 +31,50 @@ El proyecto está organizado bajo la estructura de un **Monorepo** que separa cl
 
 ```text
 recomendador-streaming/
-├── backend/                        # Motor Algorítmico y API REST
+├── backend/                        # Motor Algorítmico y API REST (FastAPI)
 │   ├── app/
-│   │   ├── api/                    # Rutas y Controladores de la API
-│   │   │   ├── routes_recommend.py # Endpoints para solicitudes de recomendación
-│   │   │   └── routes_metrics.py   # Endpoints para benchmarking de complejidad
-│   │   ├── algorithms/             # IMPLEMENTACIÓN CORE DE ALGORITMOS
-│   │   │   ├── brute_force.py      # Fuerza Bruta y Backtracking
-│   │   │   ├── graphs.py           # BFS, SCC (Tarjan / Kosaraju), Flujo Máximo
-│   │   │   ├── greedy.py           # Algoritmos Voraces (Top-K)
-│   │   │   ├── dynamic_prog.py     # Programación Dinámica y DP en Grafos
-│   │   │   └── mst_clustering.py   # Prim / Kruskal y Disjoint-Set (UFDS)
-│   │   ├── models/                 # Estructuras de datos (Grafo, Nodos, Aristas)
-│   │   └── utils/                  # Medidores de tiempo, uso de memoria y profiler
-│   ├── data/                       # Datasets sintéticos y reales (JSON / CSV)
-│   ├── main.py                     # Punto de entrada del servidor (FastAPI / Flask)
-│   └── requirements.txt            # Dependencias del Backend
+│   │   ├── api/                    # Endpoints del Servidor
+│   │   │   ├── routes_recommend.py # Solicitudes de recomendación y comunidades
+│   │   │   └── routes_metrics.py   # Benchmark (Tiempos ms, Memoria MB, Ops)
+│   │   │
+│   │   ├── algorithms/             # IMPLEMENTACIÓN DE ALGORITMOS (CORE)
+│   │   │   ├── brute_force.py      # Fuerza Bruta (Comparar usuarios)
+│   │   │   ├── backtracking.py     # Backtracking (Combinaciones de preferencias)
+│   │   │   ├── graphs.py           # BFS (Cercanas), SCC (Tarjan/Kosaraju - Comunidades)
+│   │   │   ├── max_flow.py         # Flujo Máximo (Edmonds-Karp / Dinic - Asignación)
+│   │   │   ├── greedy.py           # Voraces (Recomendaciones rápidas Top-K)
+│   │   │   ├── dynamic_prog.py     # DP (Sistemas recomendadores) y DP en Grafos (Rutas)
+│   │   │   └── mst_clustering.py   # MST (Kruskal/Prim) y UFDS (Disjoint-Set Clustering)
+│   │   │
+│   │   ├── services/               # NUEVO: Servicios externos y ETL
+│   │   │   └── tmdb_client.py      # Extracción y parsing de datos de la API de TMDB
+│   │   │
+│   │   ├── models/                 # Modelos de Datos
+│   │   │   ├── graph.py            # Representación de Grafo (Listas/Matrices adyacencia)
+│   │   │   └── user_movie.py       # Pydantic models (Usuario, Película, Calificación)
+│   │   │
+│   │   └── utils/                  # Herramientas de Medición
+│   │       ├── benchmark.py        # Medidores de tiempo (perf_counter), memoria (tracemalloc)
+│   │       └── metrics_exporter.py # Generador de datos comparativos (CSV/JSON de métricas)
+│   │
+│   ├── data/                       # Datasets
+│   │   ├── raw_tmdb.json           # Datos crudos de la API TMDB
+│   │   └── processed_graph.json    # Grafo de usuarios/películas procesado
+│   │
+│   ├── main.py                     # Entry point de FastAPI
+│   └── requirements.txt            # fastAPI, uvicorn, requests, networkx, pydantic, etc.
 │
-├── frontend/                       # Interfaz Web e Historial
+├── frontend/                       # Interfaz Web e Historial (React / Vue / Svelte)
 │   ├── src/
-│   │   ├── components/             # Visualizador de Grafos (Vis.js / D3.js / Cytoscape)
-│   │   ├── views/                  # Vistas principales (Panel, Grafos, Benchmark)
-│   │   └── services/               # Cliente HTTP (Axios / Fetch)
+│   │   ├── components/
+│   │   │   ├── GraphVisualizer.jsx # Visualizador interactivo (Vis.js / Cytoscape)
+│   │   │   ├── BenchmarkChart.jsx  # Gráficas de rendimiento (Chart.js / Recharts)
+│   │   │   └── MovieCard.jsx       # Tarjetas de películas recomendadas
+│   │   ├── views/
+│   │   │   ├── Dashboard.jsx       # Panel principal de usuario
+│   │   │   ├── GraphView.jsx       # Vista de comunidades y grafos
+│   │   │   └── BenchmarkView.jsx   # Vista de comparación de complejidad algorítmica
+│   │   └── services/
+│   │       └── api.js              # Cliente Axios/Fetch para backend
 │   └── package.json
 └── README.md
