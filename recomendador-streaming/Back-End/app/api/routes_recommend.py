@@ -33,7 +33,7 @@ max_flow_algo = MaxFlowAllocator()
 backtrack_algo = PreferenceBacktracking()
 
 
-@router.get("/top-k", summary="Recomendaciones rápidas Top-K (Algoritmo Voraz)")
+@router.get("/top-k", summary="Recomendaciones rápidas Top-K")
 def get_top_k(k: int = Query(10, ge=1, le=50)):
     """
     Retorna las K películas más populares/mejor calificadas usando el enfoque Greedy.
@@ -51,7 +51,7 @@ def get_top_k(k: int = Query(10, ge=1, le=50)):
     return {"algorithm": "Greedy", "count": len(top_k), "data": top_k}
 
 
-@router.get("/marathon", summary="Secuencia óptima de reproducción (Programación Dinámica)")
+@router.get("/marathon", summary="Secuencia óptima de reproducción")
 def get_marathon_playlist(available_minutes: int = Query(300, ge=60, le=1440)):
     """
     Resuelve el problema de la mochila (Knapsack DP) para maximizar la satisfacción
@@ -77,7 +77,7 @@ def get_marathon_playlist(available_minutes: int = Query(300, ge=60, le=1440)):
     }
 
 
-@router.get("/communities", summary="Detección de Comunidades (SCC - Tarjan / UFDS)")
+@router.get("/communities", summary="Detección de Comunidades")
 def get_communities(method: str = Query("scc", enum=["scc", "ufds"])):
     """
     Identifica grupos de usuarios/películas fuertemente conectados o clusterizados.
@@ -91,7 +91,7 @@ def get_communities(method: str = Query("scc", enum=["scc", "ufds"])):
         for i in range(len(nodes) - 1):
             adj_graph[nodes[i]].append(nodes[i+1])
             if i % 3 == 0:
-                adj_graph[nodes[i+1]].append(nodes[i])  # Crear ciclos
+                adj_graph[nodes[i+1]].append(nodes[i])
         
         communities = graph_algo.find_scc_tarjan(adj_graph)
         return {"algorithm": "Tarjan SCC", "total_communities": len(communities), "communities": communities}
@@ -101,7 +101,7 @@ def get_communities(method: str = Query("scc", enum=["scc", "ufds"])):
         return {"algorithm": "UFDS Clustering", "total_clusters": len(clusters), "clusters": clusters}
 
 
-@router.get("/filter-backtracking", summary="Búsqueda de combinaciones bajo filtro (Backtracking)")
+@router.get("/filter-backtracking", summary="Búsqueda de combinaciones bajo filtro")
 def filter_combinations(target_time: int = 240, min_rating: float = 7.0, max_movies: int = 2):
     """
     Explora combinaciones exactas mediante Backtracking aplicando poda por restricción.
@@ -113,7 +113,7 @@ def filter_combinations(target_time: int = 240, min_rating: float = 7.0, max_mov
             "rating": m.get("Calificación Promedio", 0),
             "runtime": m.get("Duracion_Minutos", 120)
         }
-        for m in movies_data[:20]  # Limitar entrada para evitar explosión combinatoria
+        for m in movies_data[:20] 
     ]
     
     combinations = backtrack_algo.find_movie_combinations(
