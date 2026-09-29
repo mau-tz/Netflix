@@ -93,12 +93,32 @@ def get_communities(method: str = Query("scc", enum=["scc", "ufds"])):
             if i % 3 == 0:
                 adj_graph[nodes[i+1]].append(nodes[i])
         
-        communities = graph_algo.find_scc_tarjan(adj_graph)
-        return {"algorithm": "Tarjan SCC", "total_communities": len(communities), "communities": communities}
+        raw_communities = graph_algo.find_scc_tarjan(adj_graph)
+        
+        formatted_communities = [
+            {"community_id": idx + 1, "movie_ids": community}
+            for idx, community in enumerate(raw_communities)
+        ]
+        
+        return {
+            "algorithm": "Tarjan SCC", 
+            "total_communities": len(formatted_communities), 
+            "communities": formatted_communities
+        }
     else:
         edges = [(nodes[i], nodes[i+1]) for i in range(len(nodes)-1)]
-        clusters = mst_algo.get_clusters_ufds(nodes, edges)
-        return {"algorithm": "UFDS Clustering", "total_clusters": len(clusters), "clusters": clusters}
+        raw_clusters = mst_algo.get_clusters_ufds(nodes, edges)
+        
+        formatted_clusters = [
+            {"cluster_id": idx + 1, "movie_ids": cluster}
+            for idx, cluster in enumerate(raw_clusters)
+        ]
+        
+        return {
+            "algorithm": "UFDS Clustering", 
+            "total_clusters": len(formatted_clusters), 
+            "clusters": formatted_clusters
+        }
 
 
 @router.get("/filter-backtracking", summary="Búsqueda de combinaciones bajo filtro")
