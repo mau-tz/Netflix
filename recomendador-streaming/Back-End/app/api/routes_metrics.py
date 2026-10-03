@@ -9,7 +9,7 @@ import os
 
 router = APIRouter(prefix="/metrics", tags=["Benchmarking y Complejidad"])
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), "../../data/movies.json")
+DATA_PATH = os.path.join(os.path.dirname(__file__), "../../data/Base_Datos_TMDB.json")
 
 def load_movies():
     if os.path.exists(DATA_PATH):
