@@ -61,10 +61,10 @@ for pagina in range(1, 101):
                 })
             print(f" -> Página {pagina} procesada correctamente.")
         except Exception as e:
-            print(f" [!] Error al procesar el JSON en la página {pagina}: {e}")
+            print(f"Error al procesar el JSON en la página {pagina}: {e}")
             break
     else:
-        print(f" [!] El servidor respondió con un error. Código: {respuesta.status_code}")
+        print(f"El servidor respondió con un error. Código: {respuesta.status_code}")
         print(f" Contenido del error: {respuesta.text[:200]}")
         break
 
