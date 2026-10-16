@@ -34,22 +34,48 @@ backtrack_algo = PreferenceBacktracking()
 
 
 @router.get("/top-k", summary="Recomendaciones rápidas Top-K")
-def get_top_k(k: int = Query(10, ge=1, le=50)):
+def get_top_k(
+    k: int = Query(10, ge=1, le=50, description="Cantidad de películas a retornar"),
+    genre: Optional[str] = Query(None, description="Género opcional (ej. 'Acción', 'Comedia', 'Ciencia ficción')")
+):
     """
     Retorna las K películas más populares/mejor calificadas usando el enfoque Greedy.
+    Permite filtrar opcionalmente por un género en específico.
     """
     candidates = []
+    
     for m in movies_data:
+        m_genres = parse_genres(m.get("Género", ""))
+        
+        # Filtro opcional: Si el usuario pasa un género, omitimos las películas que no lo tengan
+        if genre and genre.strip().lower() not in m_genres:
+            continue
+
+        # Extraemos métricas para el ordenamiento voraz (rating y popularidad)
+        try:
+            rating_val = float(m.get("Calificación Promedio") or 0.0)
+            pop_val = float(m.get("Popularidad") or 0.0)
+        except (ValueError, TypeError):
+            rating_val, pop_val = 0.0, 0.0
+
         candidates.append({
             "id": m.get("ID"),
             "title": m.get("Título en Español") or m.get("Título Original"),
-            "score": m.get("Popularidad", 0),
-            "rating": m.get("Calificación Promedio", 0)
+            "score": pop_val,
+            "rating": rating_val,
+            "genres": m.get("Género")
         })
     
+    # El algoritmo Voraz (Greedy) ordena rápidamente y selecciona las K mejores
     top_k = greedy_algo.get_top_k_recommendations(candidates, k)
-    return {"algorithm": "Greedy", "count": len(top_k), "data": top_k}
 
+    return {
+        "algorithm": "Greedy (Selección Voraz Top-K)",
+        "genre_filter": genre if genre else "Todos los géneros",
+        "requested_k": k,
+        "total_returned": len(top_k),
+        "data": top_k
+    }
 
 @router.get("/marathon", summary="Secuencia óptima de reproducción")
 def get_marathon_playlist(available_minutes: int = Query(300, ge=60, le=1440)):
