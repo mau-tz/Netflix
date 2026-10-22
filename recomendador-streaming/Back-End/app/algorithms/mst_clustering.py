@@ -5,15 +5,14 @@ class UnionFind:
         self.operations = 0
 
     def find(self, i):
-        self.operations += 1
-        if self.parent[i] == i:
-            return i
-        # Compresión de caminos (Path Compression)
-        self.parent[i] = self.find(self.parent[i])
-        return self.parent[i]
+        # Iterativo con compresión de caminos (path halving): evita la recursión profunda
+        while self.parent[i] != i:
+            self.operations += 1
+            self.parent[i] = self.parent[self.parent[i]]
+            i = self.parent[i]
+        return i
 
     def union(self, i, j):
-        self.operations += 1
         root_i = self.find(i)
         root_j = self.find(j)
 
@@ -67,3 +66,26 @@ class MSTClustering:
 
         self.operation_count = uf.operations
         return clusters
+
+    def mst_clusters(self, nodes: list, edges: list, k: int) -> tuple:
+        """
+        Clustering por MST (single-linkage): Kruskal se detiene cuando quedan k componentes,
+        lo que equivale a construir el MST y eliminar sus k-1 aristas más pesadas.
+        edges: [(peso, u, v)]. Devuelve (clusters {raíz: [nodos]}, aristas_del_mst_usadas).
+        """
+        uf = UnionFind(nodes)
+        components = len(nodes)
+        used = []
+        for weight, u, v in sorted(edges, key=lambda x: x[0]):
+            self.operation_count += 1
+            if components <= k:
+                break
+            if uf.union(u, v):
+                used.append((u, v, weight))
+                components -= 1
+
+        clusters = {}
+        for node in nodes:
+            clusters.setdefault(uf.find(node), []).append(node)
+        self.operation_count += uf.operations
+        return clusters, used

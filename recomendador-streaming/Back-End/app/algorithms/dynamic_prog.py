@@ -5,9 +5,10 @@ class DynamicProgrammingRecommender:
 
     def memoized_similarity(self, u1_id: str, u2_id: str, compute_func, *args) -> float:
         """
-        Optimización DP mediante Memoización para evitar recalcular la similitud entre usuarios.
+        Optimización DP mediante Memoización: cada par de elementos se compara una sola vez.
+        operation_count cuenta únicamente los cálculos reales (fallos de caché).
         """
-        key = tuple(sorted([u1_id, u2_id]))
+        key = (u1_id, u2_id) if u1_id <= u2_id else (u2_id, u1_id)
         if key in self.memo:
             return self.memo[key]
 
@@ -18,31 +19,37 @@ class DynamicProgrammingRecommender:
 
     def max_satisfaction_watchsequence(self, movies: list, available_time: int) -> tuple:
         """
-        Problema de la Mochila (Knapsack 0/1) con Programación Dinámica para armar 
-        la playlist perfecta de duración <= available_time con máxima satisfacción.
-        Complejidad: O(N * T)
+        Mochila 0/1 con Programación Dinámica: playlist de duración <= available_time
+        con máxima satisfacción. movies: [{'runtime': min, 'rating': r, ...}]
+        Complejidad: O(N * T) en tiempo; O(T) para la tabla de valores + N*T bits de decisión.
+        Devuelve (satisfacción_total, películas_seleccionadas_en_orden_original).
         """
         self.operation_count = 0
         n = len(movies)
-        dp = [[0 for _ in range(available_time + 1)] for _ in range(n + 1)]
+        T = max(int(available_time), 0)
+        dp = [0] * (T + 1)  # dp[w] = mejor satisfacción con w minutos disponibles
+        taken = [bytearray(T + 1) for _ in range(n)]  # taken[i][w] = 1 si la película i mejora dp[w]
 
-        for i in range(1, n + 1):
-            duration = movies[i - 1]['runtime']
-            score = int(movies[i - 1]['rating'] * 10)  # Escalar a entero
-
-            for w in range(1, available_time + 1):
+        for i, movie in enumerate(movies):
+            duration = int(movie["runtime"])
+            score = int(round(float(movie.get("rating") or 0.0) * 10))  # escalar a entero
+            if duration <= 0 or duration > T:
+                continue
+            row = taken[i]
+            # w descendente: cada película se usa como máximo una vez (0/1)
+            for w in range(T, duration - 1, -1):
                 self.operation_count += 1
-                if duration <= w:
-                    dp[i][w] = max(score + dp[i - 1][w - duration], dp[i - 1][w])
-                else:
-                    dp[i][w] = dp[i - 1][w]
+                candidate = dp[w - duration] + score
+                if candidate > dp[w]:
+                    dp[w] = candidate
+                    row[w] = 1
 
-        # Reconstruir la lista de películas seleccionadas
-        selected_movies = []
-        w = available_time
-        for i in range(n, 0, -1):
-            if dp[i][w] != dp[i - 1][w]:
-                selected_movies.append(movies[i - 1])
-                w -= movies[i - 1]['runtime']
+        # Reconstrucción de la solución
+        selected, w = [], T
+        for i in range(n - 1, -1, -1):
+            if taken[i][w]:
+                selected.append(movies[i])
+                w -= int(movies[i]["runtime"])
+        selected.reverse()
 
-        return dp[n][available_time], selected_movies
+        return dp[T], selected
