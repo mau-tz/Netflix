@@ -28,18 +28,6 @@ def _require_movie(movie_id: int) -> dict:
     return movie
 
 
-def _runtime_info(movies: list) -> dict:
-    estimated = sum(1 for m in movies if m["runtime_estimated"])
-    return {
-        "runtime_estimated_count": estimated,
-        "runtime_note": (
-            f"{estimated} de {len(movies)} películas usan una duración estimada de 120 min "
-            "porque el dataset aún no incluye la duración real." if estimated else
-            "Todas las duraciones provienen del dataset."
-        ),
-    }
-
-
 def _dominant_genres(movies: list, top: int = 3) -> list:
     counts = {}
     for m in movies:
@@ -114,7 +102,6 @@ def get_marathon_playlist(
         "selected_movies_count": len(playlist),
         "dp_operations": dp.operation_count,
         "topological_operations": topo_ops,
-        **_runtime_info(playlist),
         "playlist": [public_view(m, position=i) for i, m in enumerate(playlist, start=1)],
     }
 
@@ -174,7 +161,6 @@ def get_watch_order(
         "franchise": match,
         "has_cycle": has_cycle,
         "operations": ops,
-        **_runtime_info(order),
         "total_runtime_minutes": sum(m["runtime"] for m in order),
         "watch_order": [public_view(m, position=i) for i, m in enumerate(order, start=1)],
     }
@@ -395,6 +381,8 @@ def get_catalog_sorted(
     min_value: Optional[float] = Query(None, description="Valor mínimo de sort_by (solo campos numéricos)"),
     max_value: Optional[float] = Query(None, description="Valor máximo de sort_by (solo campos numéricos)"),
     genre: Optional[str] = Query(None),
+    q: Optional[str] = Query(None, description="Texto a buscar en el título"),
+    min_votes: int = Query(1, ge=0, description="Votos mínimos (1 excluye estrenos sin calificar)"),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
 ):
@@ -406,7 +394,12 @@ def get_catalog_sorted(
         raise HTTPException(status_code=400, detail="min_value/max_value solo aplican a campos numéricos")
 
     dc = DivideAndConquer()
-    movies = [m for m in get_catalog() if matches_genre(m, genre)]
+    needle = q.strip().lower() if q else None
+    movies = [
+        m for m in get_catalog()
+        if matches_genre(m, genre) and m["votes"] >= min_votes
+        and (not needle or needle in m["title"].lower() or needle in m["original_title"].lower())
+    ]
     ordered = dc.merge_sort(movies, key=lambda m: m[sort_by])
     sort_ops = dc.operation_count
 
@@ -474,7 +467,6 @@ def filter_combinations(
         "total_combinations_found": len(results),
         "truncated": algo.truncated,
         "operations": algo.operation_count,
-        **_runtime_info([m for m in movies]),
         "results": results,
     }
 

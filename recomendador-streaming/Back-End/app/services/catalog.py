@@ -6,15 +6,20 @@ from collections import Counter
 from functools import lru_cache
 from typing import Optional
 
-DATA_PATH = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "../../data/Base_Datos_TMDB.json")
+_DATA_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../data"))
+# Se prefiere el dataset enriquecido (con duración y colección); si no existe, el original.
+DATA_PATH = next(
+    (p for p in (os.path.join(_DATA_DIR, "Base_Datos_TMDB_enriquecido.json"),
+                 os.path.join(_DATA_DIR, "Base_Datos_TMDB.json")) if os.path.exists(p)),
+    os.path.join(_DATA_DIR, "Base_Datos_TMDB.json"),
 )
 
 # Nombres aceptados para la duración (minutos) cuando se agregue al JSON.
 RUNTIME_KEYS = ("Duración (min)", "Duración", "Duracion_Minutos", "Duracion", "runtime")
-DEFAULT_RUNTIME = 120  # Estimación mientras el dataset no incluya la duración
+DEFAULT_RUNTIME = 120  # Solo para películas cuyo registro no trae duración
 MAX_RUNTIME = 600
 NO_GENRE = "sin género especificado"
+POSTER_BASE = "https://image.tmdb.org/t/p/w342"
 
 
 def parse_genres(genre_str: str) -> set:
@@ -49,6 +54,15 @@ def _read_runtime(raw: dict) -> Optional[int]:
         if 0 < minutes <= MAX_RUNTIME:
             return minutes
     return None
+
+
+def _clean_collection(name: Optional[str]) -> Optional[str]:
+    """'Colección Spider-Man (Serie)' -> 'Spider-Man'."""
+    if not name:
+        return None
+    cleaned = re.sub(r"\(?\b(colecci[oó]n|collection|saga|serie)\b\)?", "", name, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" -:")
+    return cleaned or None
 
 
 def _franchise_prefix(title: str) -> Optional[str]:
@@ -90,9 +104,11 @@ def get_catalog() -> list:
             "votes": int(_to_float(raw.get("Total de Votos"))),
             "popularity": _to_float(raw.get("Popularidad")),
             "release_date": raw.get("Fecha de Lanzamiento") or "",
+            "overview": raw.get("Sinopsis") or "",
+            "poster": f"{POSTER_BASE}{raw['Póster']}" if raw.get("Póster") else None,
             "runtime": runtime if runtime else DEFAULT_RUNTIME,
-            "runtime_estimated": runtime is None,
             "franchise": None,
+            "_collection": _clean_collection(raw.get("Colección")),
         })
 
     # Rating ponderado: WR = v/(v+m)*R + m/(v+m)*C. Evita que una película con 6 votos
@@ -107,8 +123,9 @@ def get_catalog() -> list:
         v = m["votes"]
         m["weighted_rating"] = round((v * m["rating"] + min_votes * mean_rating) / (v + min_votes), 4)
 
-    # Sagas: prefijo de título antes de ':' compartido por 2 o más películas.
-    prefixes = {m["id"]: _franchise_prefix(m["title"]) for m in movies}
+    # Sagas: colección de TMDB o prefijo de título antes de ':', compartido por 2 o más películas.
+    # Si el dataset trae "Colección" (TMDB) se usa esa; si no, el prefijo del título.
+    prefixes = {m["id"]: m.pop("_collection") or _franchise_prefix(m["title"]) for m in movies}
     counts = Counter(p.lower() for p in prefixes.values() if p)
     for m in movies:
         prefix = prefixes[m["id"]]
@@ -141,8 +158,9 @@ def public_view(movie: dict, **extra) -> dict:
         "votes": movie["votes"],
         "genres": movie["genres"],
         "release_date": movie["release_date"],
+        "overview": movie["overview"],
+        "poster": movie["poster"],
         "runtime": movie["runtime"],
-        "runtime_estimated": movie["runtime_estimated"],
         "franchise": movie["franchise"],
     }
     view.update(extra)
