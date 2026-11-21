@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -41,7 +41,7 @@ def _dominant_genres(movies: list, top: int = 3) -> list:
 def get_top_k(
     k: int = Query(10, ge=1, le=50, description="Cantidad de películas a retornar"),
     genre: Optional[str] = Query(None, description="Género opcional (ej. 'Acción', 'Comedia')"),
-    criteria: str = Query("popularity", enum=["popularity", "weighted_rating", "rating"],
+    criteria: Literal["popularity", "weighted_rating", "rating"] = Query("popularity",
                           description="Criterio voraz de selección"),
     min_votes: int = Query(0, ge=0, description="Votos mínimos para ser candidata"),
     max_runtime: Optional[int] = Query(None, ge=30, description="Duración máxima en minutos"),
@@ -169,7 +169,7 @@ def get_watch_order(
 # --------------------------------------------------------------- Grafos
 @router.get("/communities", summary="Detección de Comunidades")
 def get_communities(
-    method: str = Query("scc", enum=["scc", "ufds"]),
+    method: Literal["scc", "ufds"] = Query("scc"),
     pool: int = Query(100, ge=10, le=300, description="Cantidad de mejores títulos a analizar"),
     neighbors: int = Query(3, ge=1, le=10, description="[scc] vecinas más parecidas por película"),
     min_similarity: float = Query(0.7, ge=0.0, le=1.0, description="[ufds] similitud mínima para unir"),
@@ -376,8 +376,8 @@ def get_similar(
 # ------------------------------------------------------ Divide y Vencerás
 @router.get("/catalog", summary="Catálogo ordenado y filtrado por rango")
 def get_catalog_sorted(
-    sort_by: str = Query("weighted_rating", enum=["weighted_rating", "rating", "popularity", "release_date", "runtime", "votes"]),
-    order: str = Query("desc", enum=["asc", "desc"]),
+    sort_by: Literal["weighted_rating", "rating", "popularity", "release_date", "runtime", "votes"] = Query("weighted_rating"),
+    order: Literal["asc", "desc"] = Query("desc"),
     min_value: Optional[float] = Query(None, description="Valor mínimo de sort_by (solo campos numéricos)"),
     max_value: Optional[float] = Query(None, description="Valor máximo de sort_by (solo campos numéricos)"),
     genre: Optional[str] = Query(None),

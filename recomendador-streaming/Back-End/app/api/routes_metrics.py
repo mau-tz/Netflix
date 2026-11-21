@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -155,7 +155,7 @@ def compare_algorithms(sample_size: int = Query(50, ge=10, le=1000)):
 
 @router.get("/scaling", summary="Crecimiento empírico de un algoritmo al aumentar N")
 def scaling(
-    algorithm: str = Query(..., enum=list(ALGORITHMS)),
+    algorithm: Literal[tuple(ALGORITHMS)] = Query(...),
     sizes: List[int] = Query([25, 50, 100, 200, 400], description="Valores de N a medir"),
 ):
     """Mide un algoritmo con varios N para contrastar el crecimiento real con la complejidad teórica."""
