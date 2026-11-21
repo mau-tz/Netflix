@@ -1,4 +1,4 @@
-# Front-End · StreamRec
+# Front-End · Netflix
 
 React + Vite. Consume el back-end FastAPI (por defecto `http://localhost:8000`).
 

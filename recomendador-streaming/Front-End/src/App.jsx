@@ -57,7 +57,7 @@ export default function App() {
     <MovieModalProvider>
       <div className="app">
         <nav className="sidebar" aria-label="Navegación principal">
-          <div className="brand"><span className="brand-logo">▶</span>StreamRec</div>
+          <div className="brand"><span className="brand-logo">▶</span>Netflix</div>
           {NAV.map((g) => (
             <div key={g.group} style={{ display: 'contents' }}>
               <div className="nav-group">{g.group}</div>
