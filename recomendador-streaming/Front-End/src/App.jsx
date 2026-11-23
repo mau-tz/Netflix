@@ -11,7 +11,6 @@ import Allocate from './views/Allocate'
 import Analysis from './views/Analysis'
 import GraphMap from './views/GraphMap'
 
-
 const NAV = [
   { group: 'Descubrir', items: [
     { id: 'home', label: 'Top del catálogo', view: Home },
