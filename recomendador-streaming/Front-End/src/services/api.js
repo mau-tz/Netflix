@@ -65,6 +65,9 @@ export const api = {
   // Benchmark
   compare: (params, signal) => request('/metrics/compare', { params, signal }),
   scaling: (params, signal) => request('/metrics/scaling', { params, signal }),
+  // Grafo completo (20.000 películas)
+  graphOverview: (params, signal) => request('/graph/overview', { params, signal }),
+  graphNode: (id, signal) => request(`/graph/node/${id}`, { signal }),
 }
 
 export const GENRES = [
