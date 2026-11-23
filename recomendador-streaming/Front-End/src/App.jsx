@@ -25,6 +25,7 @@ const NAV = [
   { group: 'Explorar el grafo', items: [
     { id: 'discover', label: 'Conexiones', view: Discover },
     { id: 'niches', label: 'Nichos', view: Niches },
+    { id: 'graphmap', label: 'Mapa del grafo', view: GraphMap },
   ] },
   { group: 'Plataforma', items: [
     { id: 'allocate', label: 'Reparto justo', view: Allocate },
