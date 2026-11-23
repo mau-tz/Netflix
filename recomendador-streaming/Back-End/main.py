@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes_recommend import router as recommend_router
 from app.api.routes_metrics import router as metrics_router
+from app.api.routes_graph import router as graph_router
+
 
 app = FastAPI(
     title="Motor Algorítmico Recomendador de Streaming",
@@ -21,6 +23,7 @@ app.add_middleware(
 # Registrar rutas
 app.include_router(recommend_router)
 app.include_router(metrics_router)
+app.include_router(graph_router)
 
 @app.get("/")
 def root():
