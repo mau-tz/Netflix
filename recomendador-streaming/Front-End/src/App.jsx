@@ -9,6 +9,8 @@ import Niches from './views/Niches'
 import Discover from './views/Discover'
 import Allocate from './views/Allocate'
 import Analysis from './views/Analysis'
+import GraphMap from './views/GraphMap'
+
 
 const NAV = [
   { group: 'Descubrir', items: [
