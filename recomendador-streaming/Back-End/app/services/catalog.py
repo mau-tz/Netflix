@@ -3,6 +3,7 @@ import os
 import re
 import statistics
 from collections import Counter
+from datetime import date
 from functools import lru_cache
 from typing import Optional
 
@@ -54,6 +55,32 @@ def _read_runtime(raw: dict) -> Optional[int]:
         if 0 < minutes <= MAX_RUNTIME:
             return minutes
     return None
+
+
+# Tendencia: la calificación ponderada pierde peso con la antigüedad del estreno.
+# factor = PISO + (1 - PISO) * 0.5 ** (días / VIDA_MEDIA): una película recién estrenada vale 1
+# y cada VIDA_MEDIA días su ventaja de novedad se reduce a la mitad (sin bajar nunca del PISO,
+# para que un clásico excelente no desaparezca del todo).
+TREND_HALF_LIFE_DAYS = 365
+TREND_FLOOR = 0.25
+
+
+def freshness(release_date: str, today: Optional[date] = None) -> Optional[float]:
+    """Factor de novedad en [PISO, 1]; None si la película aún no se estrena o no tiene fecha válida."""
+    try:
+        released = date.fromisoformat(release_date[:10])
+    except (ValueError, TypeError):
+        return None
+    age_days = ((today or date.today()) - released).days
+    if age_days < 0:
+        return None
+    return TREND_FLOOR + (1 - TREND_FLOOR) * 0.5 ** (age_days / TREND_HALF_LIFE_DAYS)
+
+
+def trending_score(movie: dict, today: Optional[date] = None) -> Optional[float]:
+    """Calificación ponderada x novedad. Cambia con la fecha, por eso no se guarda en el catálogo."""
+    factor = freshness(movie["release_date"], today)
+    return None if factor is None else round(movie["weighted_rating"] * factor, 4)
 
 
 def _clean_collection(name: Optional[str]) -> Optional[str]:

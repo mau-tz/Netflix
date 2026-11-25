@@ -12,7 +12,7 @@ from app.algorithms.greedy import GreedyRecommender
 from app.algorithms.max_flow import MaxFlowAllocator
 from app.algorithms.mst_clustering import MSTClustering
 from app.algorithms.shortest_paths import ShortestPaths
-from app.services.catalog import get_catalog, get_movie, matches_genre, public_view
+from app.services.catalog import get_catalog, get_movie, matches_genre, public_view, trending_score
 from app.services.movie_graph import build_distance_edges, build_knn_graph, top_pool
 from app.services.similarity import similarity
 
@@ -41,19 +41,23 @@ def _dominant_genres(movies: list, top: int = 3) -> list:
 def get_top_k(
     k: int = Query(10, ge=1, le=50, description="Cantidad de películas a retornar"),
     genre: Optional[str] = Query(None, description="Género opcional (ej. 'Acción', 'Comedia')"),
-    criteria: Literal["popularity", "weighted_rating", "rating"] = Query("popularity",
+    criteria: Literal["trending", "popularity", "weighted_rating", "rating"] = Query("trending",
                           description="Criterio voraz de selección"),
     min_votes: int = Query(0, ge=0, description="Votos mínimos para ser candidata"),
     max_runtime: Optional[int] = Query(None, ge=30, description="Duración máxima en minutos"),
 ):
     """Top-K con selección voraz (heap de tamaño K): O(N log K)."""
-    field = {"popularity": "popularity", "weighted_rating": "weighted_rating", "rating": "rating"}[criteria]
-    candidates = [
-        {"id": m["id"], "score": m[field], "rating": m["weighted_rating"]}
-        for m in get_catalog()
-        if matches_genre(m, genre) and m["votes"] >= min_votes
-        and (max_runtime is None or m["runtime"] <= max_runtime)
-    ]
+    candidates = []
+    for m in get_catalog():
+        if not (matches_genre(m, genre) and m["votes"] >= min_votes
+                and (max_runtime is None or m["runtime"] <= max_runtime)):
+            continue
+        # "trending" = calificación ponderada x novedad (se recalcula con la fecha de hoy);
+        # las películas sin estrenar no entran.
+        score = trending_score(m) if criteria == "trending" else m[criteria]
+        if score is None:
+            continue
+        candidates.append({"id": m["id"], "score": score, "rating": m["weighted_rating"]})
 
     greedy = GreedyRecommender()
     top = greedy.get_top_k_recommendations(candidates, k)

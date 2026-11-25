@@ -6,6 +6,7 @@ import { MovieGrid, Poster } from '../components/MovieCard'
 import { useMovieModal } from '../components/MovieModal'
 
 const CRITERIA = [
+  { value: 'trending', label: 'Tendencia' },
   { value: 'popularity', label: 'Popularidad' },
   { value: 'weighted_rating', label: 'Mejor valoradas' },
   { value: 'rating', label: 'Nota promedio' },
@@ -13,7 +14,7 @@ const CRITERIA = [
 
 export default function Home() {
   const [genre, setGenre] = useState('')
-  const [criteria, setCriteria] = useState('popularity')
+  const [criteria, setCriteria] = useState('trending')
   const [k, setK] = useState(12)
   const [minVotes, setMinVotes] = useState(0)
   const [maxRuntime, setMaxRuntime] = useState(0)
